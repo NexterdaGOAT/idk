@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Tekken 8: Iron Fist Next-Gen</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { background: #050508; color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; height: 100vh; }
+        
+        /* UI Screens */
+        .screen { display: none; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; background: radial-gradient(circle at center, #151828 0%, #050508 100%); flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .screen.active { display: flex; }
+        
+        h1 { font-size: 3.5rem; text-transform: uppercase; font-style: italic; letter-spacing: 4px; margin-bottom: 2rem; background: linear-gradient(45deg, #ff2a5f, #00f0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 10px rgba(255,42,95,0.3)); }
+        h2 { font-size: 2rem; font-style: italic; color: #ff2a5f; margin-bottom: 1.5rem; text-transform: uppercase; }
+        
+        .btn { background: linear-gradient(135deg, #ff2a5f 0%, #b3003b 100%); border: none; color: white; padding: 12px 40px; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; font-style: italic; border-radius: 4px; cursor: pointer; transition: all 0.2s; margin: 10px; width: 280px; text-align: center; border-bottom: 3px solid #660022; transform: skewX(-10deg); }
+        .btn:hover { background: linear-gradient(135deg, #00f0ff 0%, #0088cc 100%); border-bottom-color: #004466; transform: skewX(-10deg) scale(1.05); box-shadow: 0 0 20px rgba(0,240,255,0.4); }
+        
+        /* Character Select */
+        .char-grid { display: flex; gap: 20px; margin-bottom: 2rem; }
+        .char-card { width: 160px; height: 220px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 15px; cursor: pointer; position: relative; overflow: hidden; transition: all 0.2s; transform: skewX(-5deg); }
+        .char-card:hover { border-color: #00f0ff; background: rgba(0,240,255,0.1); }
+        .char-card.p1-sel { border-color: #ff2a5f; box-shadow: 0 0 15px #ff2a5f; background: rgba(255,42,95,0.1); }
+        .char-card.p2-sel { border-color: #00f0ff; box-shadow: 0 0 15px #00f0ff; background: rgba(0,240,255,0.1); }
+        .char-card .avatar { font-size: 4rem; position: absolute; top: 30%; transform: translateY(-50%); transition: transform 0.2s; }
+        .char-card:hover .avatar { transform: translateY(-50%) scale(1.1); }
+        .char-name { font-weight: bold; text-transform: uppercase; font-style: italic; letter-spacing: 1px; z-index: 2; text-shadow: 0 2px 4px #000; }
+        
+        /* Status Info Text Overlay */
+        .status-text { font-size: 1.1rem; color: #aaa; margin: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Multiplayer Setup Elements */
+        .mp-input { background: #11121a; border: 2px solid #333; color: white; padding: 10px; font-size: 1.1rem; border-radius: 4px; margin: 10px; width: 280px; text-align: center; }
+        .mp-input:focus { border-color: #00f0ff; outline: none; }
+        .mp-id-display { font-size: 1.2rem; font-weight: bold; color: #00f0ff; margin: 10px; padding: 5px 15px; background: rgba(0,240,255,0.1); border: 1px dashed #00f0ff; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: MAIN MENU -->
+    <div id="main-menu" class="screen active">
+        <h1>Stickman Tekken 8</h1>
+        <h2>The Iron Fist Next-Gen</h2>
+        <button class="btn" onclick="alert('Story Mode Commencing...')">Story Mode</button>
+        <button class="btn" onclick="openCharacterSelect('local')">Local Versus (2P)</button>
+        <button class="btn" onclick="openCharacterSelect('practice')">Practice Arena</button>
+        <button class="btn" onclick="openMultiplayerMenu()">Multiplayer Match</button>
+    </div>
+
+    <!-- SCREEN 2: MULTIPLAYER MENU -->
+    <div id="mp-menu" class="screen">
+        <h1>Multiplayer Lobby</h1>
+        <h2>Direct Connection</h2>
+        <div id="mp-my-id-container" style="display:flex; flex-direction:column; align-items:center;">
+            <p>Your Room ID (Share with your friend):</p>
+            <div id="mp-my-id" class="mp-id-display">Generating ID...</div>
+        </div>
+        <p style="margin-top: 15px;">Or join a friend's room:</p>
+        <input type="text" id="mp-join-id" class="mp-input" placeholder="Enter Friend's Room ID">
+        <button class="btn" onclick="connectToFriend()">Connect & Play</button>
+        <button class="btn" style="background:linear-gradient(135deg, #444, #222); border-bottom-color:#111;" onclick="backToMenu()">Back to Menu</button>
+    </div>
+
+    <!-- SCREEN 3: CHARACTER SELECT -->
+    <div id="char-select" class="screen">
+        <h2 id="char-select-title">Select Fighter Style</h2>
+        <p id="match-status" class="status-text">Player 1 choosing...</p>
+        <div class="char-grid">
+            <div class="char-card" id="char-Jin" onclick="selectChar('Jin')"><div class="avatar">🥋</div><div class="char-name">Jin Stick</div></div>
+            <div class="char-card" id="char-Kazuya" onclick="selectChar('Kazuya')"><div class="avatar">⚡</div><div class="char-name">Kazuya Line</div></div>
+            <div class="char-card" id="char-Reina" onclick="selectChar('Reina')"><div class="avatar">😈</div><div class="char-name">Reina Lightning</div></div>
+            <div class="char-card" id="char-King" onclick="selectChar('King')"><div class="avatar">🐆</div><div class="char-name">King Leopard</div></div>
+        </div>
+        <button class="btn" onclick="backToMenu()">Back to Menu</button>
+    </div>
+
+    <!-- Network Broker Engine Scripting External Asset -->
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+    <script>
+        let gameMode = 'local';
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+        let mySelection = null;
+        let opponentSelection = null;
+
+        function openCharacterSelect(mode) {
+            gameMode = mode;
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('char-select').classList.add('active');
+            
+            document.getElementById('char-select-title').innerText = "Select Fighter Style";
+            if(gameMode === 'multiplayer') {
+                document.getElementById('match-status').innerText = isHost ? "You are Player 1. Choose your fighter!" : "You are Player 2. Choose your fighter!";
+            } else {
+                document.getElementById('match-status').innerText = "Player 1 choosing...";
+            }
+            
+            document.querySelectorAll('.char-card').forEach(c => {
+                c.classList.remove('p1-sel', 'p2-sel');
+            });
+            mySelection = null;
+            opponentSelection = null;
+        }
+
+        function backToMenu() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('main-menu').classList.add('active');
+            if(peer) { peer.destroy(); peer = null; conn = null; }
+        }
+
+        function selectChar(name) {
+            if(gameMode === 'multiplayer') {
+                if(!conn) { alert("Connection lost!"); backToMenu(); return; }
+                if(mySelection) return;
+
+                mySelection = name;
+                const targetClass = isHost ? 'p1-sel' : 'p2-sel';
+                document.getElementById(`char-${name}`).classList.add(targetClass);
+
+                conn.send({ type: 'SELECTION', character: name, role: isHost ? 'host' : 'client' });
+                checkMatchStart();
+            } else {
+                alert(`${name} Selected! Launching combat zone arena...`);
+            }
+        }
+
+        function openMultiplayerMenu() {
+            gameMode = 'multiplayer';
+            document.getElementById('main-menu').classList.remove('active');
+            document.getElementById('mp-menu').classList.add('active');
+            document.getElementById('mp-my-id').innerText = "Generating ID...";
+
+            // Use direct reliable public network parameters
+            peer = new Peer(null, {
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
+            });
+            
+            peer.on('open', (id) => {
+                document.getElementById('mp-my-id').innerText = id;
+            });
+
+            peer.on('connection', (incomingConn) => {
+                conn = incomingConn;
+                isHost = true;
+                setupDataChannels();
+            });
+
+            peer.on('error', (err) => {
+                alert("Network error: " + err.type);
+                backToMenu();
+            });
+        }
+
+        function connectToFriend() {
+            const targetId = document.getElementById('mp-join-id').value.trim();
+            if(!targetId) { alert("Please input a valid Room ID!"); return; }
+            
+            if(!peer) { 
+                peer = new Peer(null, {
+                    config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
+                }); 
+            }
+            
+            document.getElementById('mp-join-id').placeholder = "Connecting...";
+            conn = peer.connect(targetId);
+            isHost = false;
+            
+            setupDataChannels();
+        }
+
+        function setupDataChannels() {
+            conn.on('open', () => {
+                openCharacterSelect('multiplayer');
+            });
+
+            conn.on('data', (data) => {
+                if(data.type === 'SELECTION') {
+                    opponentSelection = data.character;
+                    const opponentClass = data.role === 'host' ? 'p1-sel' : 'p2-sel';
+                    document.getElementById(`char-${data.character}`).classList.add(opponentClass);
+                    checkMatchStart();
+                }
+            });
+            
+            conn.on('close', () => {
+                alert("Opponent disconnected.");
+                backToMenu();
+            });
+        }
+
+        function checkMatchStart() {
+            if(mySelection && opponentSelection) {
+                document.getElementById('match-status').innerText = "MATCH READY! LOADING BATTLE ARENA...";
+                alert(`Starting Multiplayer Fight!\nPlayer 1 (Host): ${isHost ? mySelection : opponentSelection}\nPlayer 2 (Client): ${isHost ? opponentSelection : mySelection}`);
+            } else if (mySelection) {
+                document.getElementById('match-status').innerText = "Locked in! Waiting for opponent...";
+            } else {
+                document.getElementById('match-status').innerText = "Opponent locked in! Make your choice.";
+            }
+        }
+    </script>
+</body>
+</html>
